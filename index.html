@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Terra Realis - Next-Gen Photorealistic Survival Sandbox</title>
-    <!-- Three.js Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -17,7 +14,7 @@
         * {
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
+            touch-action: none;
             font-family: 'Tajawal', sans-serif;
         }
 
@@ -125,6 +122,117 @@
         .low-vital {
             animation: pulseGlow 1s infinite ease-in-out;
         }
+
+        /* ---------------- TOUCH CONTROLS ---------------- */
+        #touch-controls {
+            position: absolute;
+            inset: 0;
+            z-index: 25;
+            display: none;
+            pointer-events: none;
+        }
+
+        #touch-look-zone {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 55%;
+            height: 100%;
+            pointer-events: auto;
+        }
+
+        #touch-joystick-zone {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 45%;
+            height: 60%;
+            pointer-events: auto;
+        }
+
+        #joystick-base {
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #joystick-stick {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.55);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .touch-action-btn {
+            position: absolute;
+            pointer-events: auto;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+
+        #touch-btn-action {
+            width: 82px;
+            height: 82px;
+            right: 24px;
+            bottom: 130px;
+            background: rgba(56, 189, 248, 0.35);
+            border: 2px solid rgba(56, 189, 248, 0.7);
+            font-size: 1.6rem;
+        }
+
+        #touch-btn-jump {
+            width: 62px;
+            height: 62px;
+            right: 120px;
+            bottom: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            font-size: 1.2rem;
+        }
+
+        #touch-btn-sprint {
+            width: 56px;
+            height: 56px;
+            right: 24px;
+            bottom: 40px;
+            background: rgba(251, 191, 36, 0.25);
+            border: 2px solid rgba(251, 191, 36, 0.55);
+            font-size: 1.1rem;
+        }
+
+        #touch-btn-sprint.active-sprint {
+            background: rgba(251, 191, 36, 0.6);
+        }
+
+        #touch-menu-toggle {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 46px;
+            height: 46px;
+            pointer-events: auto;
+            border-radius: 9999px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 26;
+        }
     </style>
 </head>
 <body>
@@ -162,7 +270,7 @@
             <div class="glass-panel rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-sky-400">
                 <div>
                     <h1 class="text-lg md:text-2xl font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-indigo-200 to-white">
-                        TERRA REALIS <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30">v2.1 Ultra</span>
+                        TERRA REALIS <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30">v2.2 Ultra</span>
                     </h1>
                     <div class="flex items-center gap-3 text-xs text-slate-300 mt-1 font-semibold">
                         <span id="time-display" class="flex items-center gap-1"><i class="fa-regular fa-clock text-amber-400"></i> 12:00</span>
@@ -222,35 +330,30 @@
 
             <!-- Hotbar Slot Selection -->
             <div class="glass-panel rounded-2xl p-2 flex items-center justify-center gap-2 md:gap-3 w-full border-white/10">
-                <!-- Tool 0: Smooth Land Sculptor -->
                 <button onclick="selectTool(0)" id="slot-0" class="hotbar-item selected relative w-12 h-12 md:w-14 md:h-14 rounded-xl glass-panel border border-white/10 flex flex-col items-center justify-center group hover:bg-white/10">
                     <i class="fa-solid fa-mountain text-lg md:text-xl text-sky-300 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] text-slate-300 mt-0.5 font-bold">نحت الأرض</span>
                     <span class="absolute top-1 right-1.5 text-[9px] font-bold text-slate-400">1</span>
                 </button>
 
-                <!-- Tool 1: Elevate Mountain -->
                 <button onclick="selectTool(1)" id="slot-1" class="hotbar-item relative w-12 h-12 md:w-14 md:h-14 rounded-xl glass-panel border border-white/10 flex flex-col items-center justify-center group hover:bg-white/10">
                     <i class="fa-solid fa-hill-rockslide text-lg md:text-xl text-amber-400 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] text-slate-300 mt-0.5 font-bold">رفع الجبال</span>
                     <span class="absolute top-1 right-1.5 text-[9px] font-bold text-slate-400">2</span>
                 </button>
 
-                <!-- Tool 2: Lumberjack Axe -->
                 <button onclick="selectTool(2)" id="slot-2" class="hotbar-item relative w-12 h-12 md:w-14 md:h-14 rounded-xl glass-panel border border-white/10 flex flex-col items-center justify-center group hover:bg-white/10">
                     <i class="fa-solid fa-axe text-lg md:text-xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] text-slate-300 mt-0.5 font-bold">قطع الأشجار</span>
                     <span class="absolute top-1 right-1.5 text-[9px] font-bold text-slate-400">3</span>
                 </button>
 
-                <!-- Tool 3: Modular Building -->
                 <button onclick="selectTool(3)" id="slot-3" class="hotbar-item relative w-12 h-12 md:w-14 md:h-14 rounded-xl glass-panel border border-white/10 flex flex-col items-center justify-center group hover:bg-white/10">
                     <i class="fa-solid fa-cubes text-lg md:text-xl text-indigo-300 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] text-slate-300 mt-0.5 font-bold">بناء متطور</span>
                     <span class="absolute top-1 right-1.5 text-[9px] font-bold text-slate-400">4</span>
                 </button>
 
-                <!-- Tool 4: Campfire Light -->
                 <button onclick="selectTool(4)" id="slot-4" class="hotbar-item relative w-12 h-12 md:w-14 md:h-14 rounded-xl glass-panel border border-white/10 flex flex-col items-center justify-center group hover:bg-white/10">
                     <i class="fa-solid fa-fire-flame-curved text-lg md:text-xl text-orange-400 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] text-slate-300 mt-0.5 font-bold">إشعال النار</span>
@@ -265,9 +368,31 @@
                 <span class="flex items-center gap-2"><i class="fa-solid fa-cubes-stacked text-slate-400"></i> صخور: <strong id="res-stone" class="text-white">30</strong></span>
                 <span class="w-px h-3 bg-white/20"></span>
                 <button onclick="toggleCraftingModal()" class="text-sky-300 hover:text-white transition-colors flex items-center gap-1.5">
-                    <i class="fa-solid fa-hammer"></i> لوحة التصنيع (Tab / E)
+                    <i class="fa-solid fa-hammer"></i> لوحة التصنيع
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- TOUCH CONTROLS LAYER (mobile only, shown by JS) -->
+    <div id="touch-controls">
+        <div id="touch-menu-toggle" onclick="toggleCraftingModal()">
+            <i class="fa-solid fa-hammer text-white"></i>
+        </div>
+        <div id="touch-joystick-zone">
+            <div id="joystick-base">
+                <div id="joystick-stick"></div>
+            </div>
+        </div>
+        <div id="touch-look-zone"></div>
+        <div id="touch-btn-action" class="touch-action-btn">
+            <i class="fa-solid fa-hand-pointer text-white"></i>
+        </div>
+        <div id="touch-btn-jump" class="touch-action-btn">
+            <i class="fa-solid fa-arrow-up text-white"></i>
+        </div>
+        <div id="touch-btn-sprint" class="touch-action-btn">
+            <i class="fa-solid fa-forward text-white"></i>
         </div>
     </div>
 
@@ -278,13 +403,13 @@
                 <i class="fa-solid fa-earth-americas"></i>
             </div>
             <div>
-                <h2 class="text-3xl font-black text-white tracking-wide">TERRA REALIS 2.1</h2>
+                <h2 class="text-3xl font-black text-white tracking-wide">TERRA REALIS 2.2</h2>
                 <p class="text-slate-300 text-sm mt-2 leading-relaxed">
-                    تجربة المحاكاة والبقاء الأكثر واقعية عبر المتصفح. عالم مفتوح بنظام تضاريس ديناميكي ناعم بدون مكعبات، مياه تفاعلية متحركة، طقس متغير، نظام بقاء كامل (صحة/جوع/عطش/طاقة)، ونظام بناء هندسي.
+                    تجربة المحاكاة والبقاء الأكثر واقعية عبر المتصفح — تدعم الحين اللمس على الجوال بالكامل.
                 </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 text-right text-xs text-slate-300 bg-slate-900/80 p-4 rounded-2xl border border-white/10">
+            <div id="controls-desktop" class="grid grid-cols-2 gap-3 text-right text-xs text-slate-300 bg-slate-900/80 p-4 rounded-2xl border border-white/10">
                 <div class="space-y-2">
                     <p><strong class="text-sky-300">W, A, S, D:</strong> الحركة والتنقل</p>
                     <p><strong class="text-sky-300">Shift:</strong> الجري السريع</p>
@@ -294,6 +419,19 @@
                     <p><strong class="text-sky-300">الماوس الأيسر:</strong> تشكيل الأرض / التفاعل</p>
                     <p><strong class="text-sky-300">Tab / E:</strong> فتح قائمة البناء</p>
                     <p><strong class="text-sky-300">1 - 5:</strong> تبديل الأدوات والمعدات</p>
+                </div>
+            </div>
+
+            <div id="controls-mobile" class="hidden grid grid-cols-2 gap-3 text-right text-xs text-slate-300 bg-slate-900/80 p-4 rounded-2xl border border-white/10">
+                <div class="space-y-2">
+                    <p><strong class="text-sky-300">العصا اليسرى:</strong> الحركة والتنقل</p>
+                    <p><strong class="text-sky-300">السحب باليمين:</strong> تدوير النظر</p>
+                    <p><strong class="text-sky-300">زر السهم:</strong> القفز / السباحة</p>
+                </div>
+                <div class="space-y-2">
+                    <p><strong class="text-sky-300">الزر الدائري الكبير:</strong> تفاعل / تنفيذ</p>
+                    <p><strong class="text-sky-300">أيقونة المطرقة:</strong> فتح قائمة البناء</p>
+                    <p><strong class="text-sky-300">1 - 5 أسفل الشاشة:</strong> تبديل الأدوات</p>
                 </div>
             </div>
 
@@ -318,7 +456,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
-                <!-- Wooden Foundation -->
                 <div class="glass-panel p-4 rounded-2xl border-white/5 flex items-center justify-between hover:border-sky-400/40 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-300 text-xl border border-amber-400/30">
@@ -334,7 +471,6 @@
                     </button>
                 </div>
 
-                <!-- Wooden Wall -->
                 <div class="glass-panel p-4 rounded-2xl border-white/5 flex items-center justify-between hover:border-sky-400/40 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-300 text-xl border border-amber-400/30">
@@ -350,7 +486,6 @@
                     </button>
                 </div>
 
-                <!-- Stone Pillar -->
                 <div class="glass-panel p-4 rounded-2xl border-white/5 flex items-center justify-between hover:border-sky-400/40 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-xl bg-slate-500/20 flex items-center justify-center text-slate-300 text-xl border border-slate-400/30">
@@ -366,7 +501,6 @@
                     </button>
                 </div>
 
-                <!-- Campfire / Food -->
                 <div class="glass-panel p-4 rounded-2xl border-white/5 flex items-center justify-between hover:border-sky-400/40 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-300 text-xl border border-orange-400/30">
@@ -398,28 +532,32 @@
                 </button>
             </div>
 
-            <p class="text-center text-xs text-slate-400">اضغط ESC للعودة للعبة</p>
+            <p class="text-center text-xs text-slate-400" id="modal-close-hint">اضغط ESC للعودة للعبة</p>
         </div>
     </div>
 
     <!-- ENGINE CORE LOGIC -->
     <script>
         /* =========================================================================
-         * TERRA REALIS 2.1 - ADVANCED SURVIVAL ENGINE
+         * TERRA REALIS 2.2 - ADVANCED SURVIVAL ENGINE
          * Native Procedural Engine using Three.js, Simplex Noise & WebAudio
+         * Now with full touch-control support for mobile devices.
          * ========================================================================= */
+
+        const IS_TOUCH_DEVICE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         const state = {
             wood: 50,
             stone: 30,
             activeTool: 0,
-            buildStructureType: 'wall', // 'wall', 'floor', 'pillar'
+            buildStructureType: 'wall',
             health: 100,
             stamina: 100,
             water: 100,
             hunger: 100,
             isDead: false,
             isPointerLocked: false,
+            isControlActive: false, // true once gameplay has started, works for both mouse-lock and touch modes
             dayTime: 0.3,
             isRaining: false,
             inWater: false,
@@ -427,13 +565,6 @@
             fallStartY: null
         };
 
-        /* -------------------------------------------------------------------------
-         * FIXED: Proper Simplex Noise implementation
-         * The original used `perm[...] % 12 - 6` as a fake gradient selector,
-         * which produces incorrect, non-continuous noise (visible seams/spikes
-         * in terrain). This uses the standard 8-direction gradient table used
-         * by real 2D Simplex implementations.
-         * ------------------------------------------------------------------------- */
         class FastSimplexNoise {
             constructor(seed) {
                 this.grad2 = [
@@ -443,7 +574,6 @@
                 ];
                 this.p = new Uint8Array(256);
                 for (let i = 0; i < 256; i++) this.p[i] = i;
-                // Fisher-Yates shuffle (deterministic-ish, seeded by Math.random once)
                 let rand = seed ? this._mulberry32(seed) : Math.random;
                 for (let i = 255; i > 0; i--) {
                     const j = Math.floor(rand() * (i + 1));
@@ -527,7 +657,6 @@
 
         const noiseGen = new FastSimplexNoise();
 
-        // Sound Engine
         class AudioEngine {
             constructor() { this.ctx = null; }
             init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -591,7 +720,6 @@
 
         const soundEngine = new AudioEngine();
 
-        // Three.js Globals
         let scene, camera, renderer;
         let terrainMesh, terrainGeometry, waterMesh, waterBaseY = [];
         let sunLight, ambientLight, skyMesh, cloudGroup, rainParticlesSystem;
@@ -599,12 +727,10 @@
         let objectsGroup, interactiveTrees = [], interactiveRocks = [];
         let ghostBuildingMesh, grassInstancedMesh;
 
-        // Reusable raycaster + vectors to avoid per-call allocation (perf fix)
         const heightRaycaster = new THREE.Raycaster();
         const _rayOrigin = new THREE.Vector3();
         const _rayDir = new THREE.Vector3(0, -1, 0);
 
-        // Player Physical Properties
         const player = {
             height: 1.85,
             speed: 0.12,
@@ -617,11 +743,26 @@
             headBobTimer: 0
         };
 
-        const TERMINAL_VELOCITY = -45.0; // clamp fall speed (fix: unbounded gravity could tunnel through terrain)
-        const FALL_DAMAGE_SAFE_HEIGHT = 6.0; // meters of fall before damage starts
+        const TERMINAL_VELOCITY = -45.0;
+        const FALL_DAMAGE_SAFE_HEIGHT = 6.0;
         const FALL_DAMAGE_PER_METER = 6.0;
 
         const keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false, Space: false, ShiftLeft: false };
+
+        // ---- Touch control state ----
+        const touch = {
+            joystickActive: false,
+            joystickId: null,
+            joystickCenterX: 0,
+            joystickCenterY: 0,
+            moveX: 0, // -1 to 1
+            moveY: 0, // -1 to 1
+            lookActive: false,
+            lookId: null,
+            lastLookX: 0,
+            lastLookY: 0,
+            sprintOn: false
+        };
 
         const TERRAIN_SIZE = 240;
         const TERRAIN_SEGMENTS = 140;
@@ -629,12 +770,10 @@
         function initEngine() {
             const container = document.getElementById('canvas-container');
 
-            // 1. Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87ceeb);
             scene.fog = new THREE.FogExp2(0xcce0ff, 0.007);
 
-            // 2. Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
             playerContainer = new THREE.Group();
@@ -644,7 +783,6 @@
 
             raycaster = new THREE.Raycaster();
 
-            // 3. Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -654,7 +792,6 @@
             renderer.toneMappingExposure = 1.15;
             container.appendChild(renderer.domElement);
 
-            // 4. Lighting
             ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
             scene.add(ambientLight);
 
@@ -675,7 +812,6 @@
             objectsGroup = new THREE.Group();
             scene.add(objectsGroup);
 
-            // Create World Elements
             createPhotorealisticSkyAndClouds();
             buildSmoothTerrain();
             create3DGrassFoliage();
@@ -685,18 +821,17 @@
             createGhostBuilding();
 
             setupEventListeners();
+            setupTouchUIVisibility();
             updateAllVitalsUI();
 
-            // Render Animation Loop
             let lastTime = performance.now();
-            let fpsAccum = 0, fpsFrames = 0, fpsTimer = 0;
+            let fpsFrames = 0, fpsTimer = 0;
 
             function animate(now) {
                 requestAnimationFrame(animate);
                 const delta = Math.min((now - lastTime) / 1000, 0.1);
                 lastTime = now;
 
-                // FPS counter (simple rolling average)
                 fpsFrames++;
                 fpsTimer += delta;
                 if (fpsTimer >= 0.5) {
@@ -720,8 +855,19 @@
         }
 
         /* -------------------------------------------------------------------------
-         * SMOOTH TERRAIN GENERATION (NO CUBES)
+         * Detect touch devices at load and swap the control scheme + on-screen
+         * hints accordingly. This is the core fix: mouse-based Pointer Lock
+         * simply doesn't exist on mobile browsers, so we bypass it entirely
+         * on touch devices and drive movement/look from touch events instead.
          * ------------------------------------------------------------------------- */
+        function setupTouchUIVisibility() {
+            if (IS_TOUCH_DEVICE) {
+                document.getElementById('controls-desktop').classList.add('hidden');
+                document.getElementById('controls-mobile').classList.remove('hidden');
+                document.getElementById('modal-close-hint').innerText = 'اضغط على أيقونة X للعودة للعبة';
+            }
+        }
+
         function buildSmoothTerrain() {
             terrainGeometry = new THREE.PlaneBufferGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_SEGMENTS, TERRAIN_SEGMENTS);
             terrainGeometry.rotateX(-Math.PI / 2);
@@ -773,9 +919,6 @@
             scene.add(terrainMesh);
         }
 
-        /* -------------------------------------------------------------------------
-         * REALISTIC 3D DYNAMIC GRASS FOLIAGE
-         * ------------------------------------------------------------------------- */
         function create3DGrassFoliage() {
             const grassCount = 6000;
             const bladeGeo = new THREE.ConeBufferGeometry(0.08, 0.7, 3);
@@ -805,9 +948,6 @@
             scene.add(grassInstancedMesh);
         }
 
-        /* -------------------------------------------------------------------------
-         * REALISTIC WATER (now with animated waves via vertex displacement)
-         * ------------------------------------------------------------------------- */
         function createRealisticWater() {
             const waterGeo = new THREE.PlaneBufferGeometry(TERRAIN_SIZE * 2, TERRAIN_SIZE * 2, 80, 80);
             const waterMat = new THREE.MeshStandardMaterial({
@@ -823,11 +963,9 @@
             waterMesh.position.y = 2.1;
             scene.add(waterMesh);
 
-            // Cache base Y (0, since geometry is flat before rotation) per-vertex
-            // so we can displace relative to a stable baseline each frame.
             const pos = waterGeo.attributes.position;
             waterBaseY = new Float32Array(pos.count);
-            for (let i = 0; i < pos.count; i++) waterBaseY[i] = pos.getZ(i); // z before rotateX becomes local "up" offset
+            for (let i = 0; i < pos.count; i++) waterBaseY[i] = pos.getZ(i);
         }
 
         function updateWaterSurface(t) {
@@ -843,9 +981,6 @@
             waterMesh.geometry.computeVertexNormals();
         }
 
-        /* -------------------------------------------------------------------------
-         * SKY & WEATHER SYSTEM (CLOUDS & RAIN)
-         * ------------------------------------------------------------------------- */
         function createPhotorealisticSkyAndClouds() {
             const skyGeo = new THREE.SphereBufferGeometry(480, 32, 16);
             const skyMat = new THREE.MeshBasicMaterial({ color: 0x87ceeb, side: THREE.BackSide });
@@ -891,11 +1026,6 @@
             playerContainer.add(rainParticlesSystem);
         }
 
-        /* -------------------------------------------------------------------------
-         * ENVIRONMENT ASSETS (OAK TREES & BOULDERS)
-         * FIX: leaves now vary in color/tint per-cluster for a natural look
-         * instead of one flat identical material for every tree.
-         * ------------------------------------------------------------------------- */
         function populateEnvironment() {
             const leafPalette = [0x275218, 0x2f6a1c, 0x1f4718, 0x3a7a22];
 
@@ -913,7 +1043,6 @@
                 const baseColor = leafPalette[Math.floor(Math.random() * leafPalette.length)];
                 for (let i = 0; i < 3; i++) {
                     const leavesGeo = new THREE.DodecahedronBufferGeometry(2.4 - i * 0.45, 1);
-                    // slight per-layer tint variance for depth
                     const tint = new THREE.Color(baseColor);
                     tint.offsetHSL(0, 0, (Math.random() - 0.5) * 0.08);
                     const leavesMat = new THREE.MeshStandardMaterial({ color: tint, roughness: 0.65 });
@@ -954,9 +1083,6 @@
             }
         }
 
-        /* -------------------------------------------------------------------------
-         * GHOST MESH PREVIEW FOR MODULAR BUILDING
-         * ------------------------------------------------------------------------- */
         function createGhostBuilding() {
             const ghostGeo = new THREE.BoxBufferGeometry(3, 3, 0.3);
             const ghostMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.6 });
@@ -965,12 +1091,6 @@
             scene.add(ghostBuildingMesh);
         }
 
-        /* -------------------------------------------------------------------------
-         * FIX: reuse a single Raycaster + vector instead of allocating a new
-         * THREE.Raycaster and two new THREE.Vector3 objects on every call.
-         * This function runs thousands of times during world generation and
-         * every physics tick, so the old version was a major GC/perf hit.
-         * ------------------------------------------------------------------------- */
         function getTerrainHeightAt(x, z) {
             if (!terrainMesh) return 0;
             _rayOrigin.set(x, 100, z);
@@ -979,9 +1099,6 @@
             return hits.length > 0 ? hits[0].point.y : 0;
         }
 
-        /* -------------------------------------------------------------------------
-         * REAL-TIME TERRAFORMING (NO CUBES - SMOOTH MESH DEFORMATION)
-         * ------------------------------------------------------------------------- */
         function deformTerrain(point, radius, deltaHeight) {
             const pos = terrainGeometry.attributes.position;
             let modified = false;
@@ -1007,23 +1124,33 @@
 
         /* -------------------------------------------------------------------------
          * PLAYER MOVEMENT & WATER PHYSICS
-         * FIX: clamped fall speed (terminal velocity) + fall-damage tracking
+         * FIX: now reads movement from either keyboard OR the virtual joystick,
+         * and sprinting from either Shift or the on-screen sprint toggle.
          * ------------------------------------------------------------------------- */
         function updatePlayerPhysics(delta) {
-            if (!state.isPointerLocked) return;
+            if (!state.isControlActive) return;
 
             const moveVector = new THREE.Vector3();
-            if (keys.KeyW) moveVector.z -= 1;
-            if (keys.KeyS) moveVector.z += 1;
-            if (keys.KeyA) moveVector.x -= 1;
-            if (keys.KeyD) moveVector.x += 1;
-            moveVector.normalize();
+
+            if (IS_TOUCH_DEVICE) {
+                // touch.moveX/moveY are already normalized -1..1 from the joystick
+                moveVector.x = touch.moveX;
+                moveVector.z = touch.moveY;
+            } else {
+                if (keys.KeyW) moveVector.z -= 1;
+                if (keys.KeyS) moveVector.z += 1;
+                if (keys.KeyA) moveVector.x -= 1;
+                if (keys.KeyD) moveVector.x += 1;
+            }
+
+            if (moveVector.length() > 1) moveVector.normalize();
 
             const isWater = playerContainer.position.y < 2.3;
             state.inWater = isWater;
             document.getElementById('underwater-overlay').style.display = (playerContainer.position.y < 1.9) ? 'block' : 'none';
 
-            const isSprinting = keys.ShiftLeft && state.stamina > 5 && !isWater;
+            const sprintRequested = IS_TOUCH_DEVICE ? touch.sprintOn : keys.ShiftLeft;
+            const isSprinting = sprintRequested && state.stamina > 5 && !isWater;
             let currentSpeed = isWater ? player.waterSpeed : (isSprinting ? player.sprintSpeed : player.speed);
 
             if (isSprinting && moveVector.length() > 0) {
@@ -1034,11 +1161,9 @@
                 updateStaminaUI();
             }
 
-            // Move player relative to yaw
             moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
             playerContainer.position.addScaledVector(moveVector, currentSpeed);
 
-            // Head Bobbing Effect
             if (moveVector.length() > 0 && player.isGrounded) {
                 player.headBobTimer += delta * (isSprinting ? 14 : 9);
                 camera.position.y = Math.sin(player.headBobTimer) * 0.08;
@@ -1047,20 +1172,19 @@
                 camera.position.y = 0;
             }
 
-            // Terrain Collision & Swimming Physics
             const terrainY = getTerrainHeightAt(playerContainer.position.x, playerContainer.position.z);
             const targetY = terrainY + player.height;
 
             if (isWater) {
-                player.velocity.y *= 0.85; // Buoyancy resistance
-                if (keys.Space) player.velocity.y = 4.0; // Swim up
+                player.velocity.y *= 0.85;
+                if (keys.Space || touch.jumpHeld) player.velocity.y = 4.0;
                 playerContainer.position.y = Math.max(terrainY + 0.5, playerContainer.position.y + player.velocity.y * delta);
-                state.fallStartY = null; // no fall damage while swimming
+                state.fallStartY = null;
             } else {
                 if (playerContainer.position.y > targetY) {
                     if (state.fallStartY === null) state.fallStartY = playerContainer.position.y;
-                    player.velocity.y -= 26.0 * delta; // Gravity
-                    player.velocity.y = Math.max(player.velocity.y, TERMINAL_VELOCITY); // fix: clamp fall speed
+                    player.velocity.y -= 26.0 * delta;
+                    player.velocity.y = Math.max(player.velocity.y, TERMINAL_VELOCITY);
                     player.isGrounded = false;
                 } else {
                     if (state.fallStartY !== null) {
@@ -1073,7 +1197,7 @@
                     player.isGrounded = true;
                 }
 
-                if (keys.Space && player.isGrounded) {
+                if ((keys.Space || touch.jumpHeld) && player.isGrounded) {
                     player.velocity.y = 8.8;
                     player.isGrounded = false;
                 }
@@ -1081,9 +1205,6 @@
             }
         }
 
-        /* -------------------------------------------------------------------------
-         * NEW: Fall damage
-         * ------------------------------------------------------------------------- */
         function applyFallDamage(fallDistance) {
             if (fallDistance <= FALL_DAMAGE_SAFE_HEIGHT) return;
             const damage = (fallDistance - FALL_DAMAGE_SAFE_HEIGHT) * FALL_DAMAGE_PER_METER;
@@ -1092,18 +1213,11 @@
             }
         }
 
-        /* -------------------------------------------------------------------------
-         * NEW: Survival system — hunger/water drain over time, and health
-         * drains when hunger or water hits zero. Health regenerates slowly
-         * when both hunger and water are healthy.
-         * ------------------------------------------------------------------------- */
         function updateSurvivalStats(delta) {
-            // Hunger and thirst drain slowly over time
             state.hunger = Math.max(0, state.hunger - delta * 0.35);
             if (!state.inWater) {
                 state.water = Math.max(0, state.water - delta * 0.25);
             } else {
-                // standing in water slowly restores hydration
                 state.water = Math.min(100, state.water + delta * 2.5);
             }
 
@@ -1141,7 +1255,8 @@
 
         function killPlayer() {
             state.isDead = true;
-            document.exitPointerLock();
+            state.isControlActive = false;
+            exitGameplayMode();
             document.getElementById('death-overlay').style.display = 'flex';
         }
 
@@ -1171,9 +1286,6 @@
             showToast('+30 شبع مكتسب');
         }
 
-        /* -------------------------------------------------------------------------
-         * DYNAMIC ENVIRONMENT & WEATHER UPDATES
-         * ------------------------------------------------------------------------- */
         function updateEnvironmentAndWeather(delta) {
             state.dayTime += delta * 0.003;
             if (state.dayTime > 1) state.dayTime = 0;
@@ -1185,12 +1297,10 @@
             const sunIntensity = Math.max(0, Math.sin(angle));
             sunLight.intensity = sunIntensity * 1.5;
 
-            // Warm/cool color shift for sunrise/sunset realism
             const warmth = Math.max(0, 1 - sunIntensity * 1.6);
             sunLight.color.setRGB(1, 0.95 - warmth * 0.25, 0.9 - warmth * 0.45);
             ambientLight.intensity = 0.25 + sunIntensity * 0.3;
 
-            // Weather Random Switch
             if (Math.random() < 0.0003) {
                 state.isRaining = !state.isRaining;
                 rainParticlesSystem.visible = state.isRaining;
@@ -1199,7 +1309,6 @@
                     '<i class="fa-solid fa-sun text-yellow-400"></i> مشمس';
             }
 
-            // Rain Particle Falling Animation
             if (state.isRaining) {
                 const pos = rainParticlesSystem.geometry.attributes.position;
                 for (let i = 1; i < pos.count * 3; i += 3) {
@@ -1209,20 +1318,13 @@
                 pos.needsUpdate = true;
             }
 
-            // Update UI Clock
             const hours = Math.floor(state.dayTime * 24);
             const minutes = Math.floor((state.dayTime * 24 % 1) * 60);
             document.getElementById('time-display').innerHTML = `<i class="fa-regular fa-clock text-amber-400"></i> ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         }
 
-        /* -------------------------------------------------------------------------
-         * TARGETING & BUILDING PREVIEW
-         * FIX: guard against hit.object.parent being the Scene itself
-         * (Scene has no userData.type, but the old check trusted parent blindly
-         * for any raycast hit — safe now, just more defensive).
-         * ------------------------------------------------------------------------- */
         function updateRaycastTargeting() {
-            if (!state.isPointerLocked || state.isDead) return;
+            if (!state.isControlActive || state.isDead) return;
 
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             const intersects = raycaster.intersectObjects([terrainMesh, ...interactiveTrees, ...interactiveRocks], true);
@@ -1246,10 +1348,14 @@
 
                 if (parentType === 'tree') {
                     actionPrompt.classList.remove('hidden');
-                    actionPrompt.innerHTML = 'اضغط لقطع <span class="text-emerald-300">الشجرة الخشبية</span>';
+                    actionPrompt.innerHTML = IS_TOUCH_DEVICE
+                        ? 'اضغط زر التفاعل لقطع <span class="text-emerald-300">الشجرة الخشبية</span>'
+                        : 'اضغط لقطع <span class="text-emerald-300">الشجرة الخشبية</span>';
                 } else if (selfType === 'rock') {
                     actionPrompt.classList.remove('hidden');
-                    actionPrompt.innerHTML = 'اضغط لتكسير <span class="text-slate-300">الصخرة الجبلية</span>';
+                    actionPrompt.innerHTML = IS_TOUCH_DEVICE
+                        ? 'اضغط زر التفاعل لتكسير <span class="text-slate-300">الصخرة الجبلية</span>'
+                        : 'اضغط لتكسير <span class="text-slate-300">الصخرة الجبلية</span>';
                 } else {
                     actionPrompt.classList.add('hidden');
                 }
@@ -1260,13 +1366,8 @@
             }
         }
 
-        /* -------------------------------------------------------------------------
-         * PRIMARY ACTION EXECUTION
-         * FIX: dispose geometry/material of removed trees/rocks to prevent
-         * GPU memory leaks during long play sessions.
-         * ------------------------------------------------------------------------- */
         function handlePrimaryAction() {
-            if (state.isDead) return;
+            if (state.isDead || !state.isControlActive) return;
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             const intersects = raycaster.intersectObjects([terrainMesh, ...interactiveTrees, ...interactiveRocks], true);
 
@@ -1366,23 +1467,48 @@
         }
 
         /* -------------------------------------------------------------------------
+         * ENTER / EXIT GAMEPLAY MODE
+         * Desktop: uses Pointer Lock as before.
+         * Touch: skips Pointer Lock entirely (unsupported on mobile) and just
+         * flips isControlActive + shows the touch control layer.
+         * ------------------------------------------------------------------------- */
+        function enterGameplayMode() {
+            soundEngine.init();
+            if (IS_TOUCH_DEVICE) {
+                state.isControlActive = true;
+                document.getElementById('start-overlay').classList.add('hidden');
+                document.getElementById('touch-controls').style.display = 'block';
+            } else {
+                document.body.requestPointerLock();
+            }
+        }
+
+        function exitGameplayMode() {
+            if (IS_TOUCH_DEVICE) {
+                document.getElementById('touch-controls').style.display = 'none';
+                if (!state.isDead) document.getElementById('start-overlay').classList.remove('hidden');
+            } else {
+                document.exitPointerLock();
+            }
+        }
+
+        /* -------------------------------------------------------------------------
          * LISTENERS & UI LOGIC
          * ------------------------------------------------------------------------- */
         function setupEventListeners() {
-            document.getElementById('btn-play').addEventListener('click', () => {
-                soundEngine.init();
-                document.body.requestPointerLock();
-            });
+            document.getElementById('btn-play').addEventListener('click', enterGameplayMode);
 
             document.addEventListener('pointerlockchange', () => {
+                if (IS_TOUCH_DEVICE) return; // touch devices never use pointer lock
                 state.isPointerLocked = (document.pointerLockElement === document.body);
+                state.isControlActive = state.isPointerLocked;
                 const overlay = document.getElementById('start-overlay');
                 if (state.isPointerLocked) overlay.classList.add('hidden');
                 else if (!state.isDead) overlay.classList.remove('hidden');
             });
 
             document.addEventListener('mousemove', (e) => {
-                if (!state.isPointerLocked) return;
+                if (IS_TOUCH_DEVICE || !state.isPointerLocked) return;
 
                 const sensitivity = 0.0022;
                 player.yaw -= e.movementX * sensitivity;
@@ -1395,7 +1521,7 @@
             });
 
             document.addEventListener('mousedown', (e) => {
-                if (state.isPointerLocked && e.button === 0) handlePrimaryAction();
+                if (!IS_TOUCH_DEVICE && state.isPointerLocked && e.button === 0) handlePrimaryAction();
             });
 
             document.addEventListener('keydown', (e) => {
@@ -1416,6 +1542,132 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
+
+            if (IS_TOUCH_DEVICE) setupTouchControlListeners();
+        }
+
+        /* -------------------------------------------------------------------------
+         * TOUCH CONTROL LISTENERS
+         * Left zone = virtual joystick for movement (WASD replacement).
+         * Right zone = drag-to-look (mouse-movement replacement).
+         * Action button = primary action (left-click replacement).
+         * Jump button = held-state jump/swim-up (Space replacement).
+         * Sprint button = toggled sprint state (Shift replacement).
+         * ------------------------------------------------------------------------- */
+        function setupTouchControlListeners() {
+            const joystickZone = document.getElementById('touch-joystick-zone');
+            const joystickBase = document.getElementById('joystick-base');
+            const joystickStick = document.getElementById('joystick-stick');
+            const lookZone = document.getElementById('touch-look-zone');
+            const actionBtn = document.getElementById('touch-btn-action');
+            const jumpBtn = document.getElementById('touch-btn-jump');
+            const sprintBtn = document.getElementById('touch-btn-sprint');
+
+            const JOYSTICK_RADIUS = 55;
+
+            joystickZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                touch.joystickActive = true;
+                touch.joystickId = t.identifier;
+                touch.joystickCenterX = t.clientX;
+                touch.joystickCenterY = t.clientY;
+                joystickBase.style.left = `${t.clientX - 55}px`;
+                joystickBase.style.top = `${t.clientY - 55}px`;
+                joystickBase.style.display = 'flex';
+            }, { passive: false });
+
+            joystickZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (const t of e.changedTouches) {
+                    if (t.identifier !== touch.joystickId) continue;
+                    let dx = t.clientX - touch.joystickCenterX;
+                    let dy = t.clientY - touch.joystickCenterY;
+                    const dist = Math.min(Math.sqrt(dx * dx + dy * dy), JOYSTICK_RADIUS);
+                    const angle = Math.atan2(dy, dx);
+                    const clampedX = Math.cos(angle) * dist;
+                    const clampedY = Math.sin(angle) * dist;
+
+                    joystickStick.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+
+                    touch.moveX = clampedX / JOYSTICK_RADIUS;
+                    touch.moveY = clampedY / JOYSTICK_RADIUS;
+                }
+            }, { passive: false });
+
+            function endJoystick(e) {
+                for (const t of e.changedTouches) {
+                    if (t.identifier !== touch.joystickId) continue;
+                    touch.joystickActive = false;
+                    touch.joystickId = null;
+                    touch.moveX = 0;
+                    touch.moveY = 0;
+                    joystickBase.style.display = 'none';
+                    joystickStick.style.transform = 'translate(-50%, -50%)';
+                }
+            }
+            joystickZone.addEventListener('touchend', endJoystick);
+            joystickZone.addEventListener('touchcancel', endJoystick);
+
+            lookZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                touch.lookActive = true;
+                touch.lookId = t.identifier;
+                touch.lastLookX = t.clientX;
+                touch.lastLookY = t.clientY;
+            }, { passive: false });
+
+            lookZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (const t of e.changedTouches) {
+                    if (t.identifier !== touch.lookId) continue;
+                    const dx = t.clientX - touch.lastLookX;
+                    const dy = t.clientY - touch.lastLookY;
+                    touch.lastLookX = t.clientX;
+                    touch.lastLookY = t.clientY;
+
+                    const sensitivity = 0.0045;
+                    player.yaw -= dx * sensitivity;
+                    player.pitch -= dy * sensitivity;
+                    player.pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, player.pitch));
+
+                    camera.rotation.set(0, 0, 0);
+                    camera.rotation.x = player.pitch;
+                    playerContainer.rotation.y = player.yaw;
+                }
+            }, { passive: false });
+
+            function endLook(e) {
+                for (const t of e.changedTouches) {
+                    if (t.identifier !== touch.lookId) continue;
+                    touch.lookActive = false;
+                    touch.lookId = null;
+                }
+            }
+            lookZone.addEventListener('touchend', endLook);
+            lookZone.addEventListener('touchcancel', endLook);
+
+            actionBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handlePrimaryAction();
+            }, { passive: false });
+
+            jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                touch.jumpHeld = true;
+            }, { passive: false });
+            jumpBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                touch.jumpHeld = false;
+            });
+            jumpBtn.addEventListener('touchcancel', () => { touch.jumpHeld = false; });
+
+            sprintBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                touch.sprintOn = !touch.sprintOn;
+                sprintBtn.classList.toggle('active-sprint', touch.sprintOn);
+            }, { passive: false });
         }
 
         function selectTool(index) {
@@ -1473,9 +1725,15 @@
 
         function toggleCraftingModal() {
             const modal = document.getElementById('crafting-modal');
+            const wasHidden = modal.classList.contains('hidden');
             modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden') && state.isPointerLocked) {
+            if (!wasHidden) return; // was open, now closing — no need to pause further
+
+            // opening the modal: pause gameplay controls
+            if (!IS_TOUCH_DEVICE && state.isPointerLocked) {
                 document.exitPointerLock();
+            } else if (IS_TOUCH_DEVICE) {
+                document.getElementById('touch-controls').style.display = 'none';
             }
         }
 
@@ -1484,4 +1742,4 @@
         };
     </script>
 </body>
-  </html>
+</html>
